@@ -11,6 +11,7 @@ return array(
 	'Paleo scale' => 'Paleo skali',
 	'Icelandic' => 'Íslenska',
 	'Method' => 'Aðferð',
+	'Options' => 'Valkostir',
 
 	// navigation
 	'Home' => 'Heim',
@@ -45,12 +46,14 @@ return array(
 	'Cook time' => 'Eldunartími',
 	'min' => 'mín',
 	'people' => 'manns',
+	'Edit recipe' => 'Breyta uppskrift',
 	
 	// menu
 	'Add menu' => 'Útbúa matseðil',
 	'Views' => 'Skoðað',
 	'View grocery list' => 'Skoða innkaupalista',
 	'Amount' => 'Magn',
+	'Add to menu' => 'Setja á matseðil',
 	
 	// nutrition facts
 	'Nutrition facts' => 'Næringartafla',
@@ -125,6 +128,7 @@ return array(
 	'User created successfully' => 'Notandi búinn til.',
 	'User profile not ready yet!' => 'Notandaprófíll ekki tilbúinn!',
 	'Logout' => 'Útskrá',
+	'Language' => 'Tungumál',
 
 	// user :: profile
 	'When do you grocery shopping?' => 'Hvenær gerir þú matarinnkaup?',

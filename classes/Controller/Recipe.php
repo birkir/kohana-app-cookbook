@@ -27,13 +27,41 @@ class Controller_Recipe extends Controller_Template {
 		$this->view = View::factory('recipe/list')
 		->bind('items', $items)
 		->set('limit', $this->_limit)
-		->set('offset', 0);
+		->set('offset', 0)
+		->set('q', $this->request->query());
 
 		// get recipes
 		$items = $this->search(array(), array(
 			'offset' => 0,
 			'limit' => $this->_limit
 		));
+	}
+
+	public function action_ihave()
+	{
+		$this->template->title = "Ég á til í ískápnum";
+
+		$this->view = View::factory('recipe/ihave')
+		->bind('items', $items);
+
+		if ($this->request->method() == HTTP_Request::GET AND ! empty($_GET['q']))
+		{
+			$in = explode(',', Arr::get($this->request->query(), 'q'));
+
+			$subquery = DB::select(DB::expr('COUNT(*)'))
+			->from('recipe_ingredient')
+			->where('recipe_ingredient.recipe_id', '=', DB::expr('`recipe`.`id`'))
+			->and_where('recipe_ingredient.ingredient_id', 'IN', DB::expr('('.implode(',', $in).')'));
+
+			$subquery2 = DB::select(DB::expr('COUNT(*)'))
+			->from('recipe_ingredient')
+			->where('recipe_ingredient.recipe_id', '=', DB::expr('`recipe`.`id`'));
+
+			$items = ORM::factory('Recipe')
+			->select(array(DB::Expr('CONCAT(calories,",",protein,",",fat,",",carbs,",",sugars)'), 'nutritions'))
+			->where($subquery, '=', $subquery2)
+			->find_all();
+		}
 	}
 
 	/**
@@ -76,7 +104,7 @@ class Controller_Recipe extends Controller_Template {
 			);
 
 			$cache = Cache::instance('sqlite');
-			$cache->set($search_identifier, http_build_query($query), 900);
+			$cache->set($search_identifier, http_build_query($query), 86400 * 7);
 		
 			foreach ($items as $item)
 			{
@@ -106,8 +134,14 @@ class Controller_Recipe extends Controller_Template {
 			// get categories
 			$categories = ORM::factory('Category')->find_all();
 
+			$cache = Cache::instance('sqlite');
+
+			parse_str($cache->get($this->request->param('id')), $output);
+
+			$this->view->q = $output;
+
 			// items
-			$items = $this->search(array(), array(
+			$items = $this->search($output, array(
 				'offset' => 0,
 				'limit' => $this->_limit
 			));
@@ -273,6 +307,8 @@ class Controller_Recipe extends Controller_Template {
 			$recipe = ORM::factory('Recipe');
 		}
 
+		$edit = $recipe->loaded();
+
 		// check if request method is POST
 		if ($this->request->method() == HTTP_Request::POST)
 		{
@@ -292,7 +328,7 @@ class Controller_Recipe extends Controller_Template {
 			));
 
 			// recipe public flag only when admin
-			$recipe->public = $this->user->logged_in('admin') ? 1 : 0;
+			$recipe->public = ($this->user->logged_in('admin') ? 1 : 0);
 
 			// check for the photo
 			if ( ! empty($_FILES['photo']['tmp_name']))
@@ -362,6 +398,11 @@ class Controller_Recipe extends Controller_Template {
 
 				// set view success
 				$this->view->success = TRUE;
+
+				if ($edit == TRUE OR $this->user->logged_in('admin'))
+				{
+					HTTP::redirect('/recipe/detail/'.$recipe->id);
+				}
 			}
 			catch (ORM_Validation_Exception $e)
 			{

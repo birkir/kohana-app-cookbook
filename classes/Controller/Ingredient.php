@@ -45,6 +45,17 @@ class Controller_Ingredient extends Controller_Template {
 		->set('items', ORM::factory('Ingredient')
 		->order_by('name', 'ASC')
 		->find_all());
+
+		// serve ajax request
+		if ($this->request->is_ajax())
+		{
+			// disable template auto render
+			$this->auto_render = FALSE;
+
+			// return all items
+			$this->response->body(json_encode(DB::select('id', array('name_is', 'name'))->from('ingredients')
+			->order_by('name', 'ASC')->execute()->as_array()));
+		}
 	}
 
 	/**

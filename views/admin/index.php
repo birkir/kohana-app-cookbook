@@ -1,5 +1,5 @@
 <h1>Admin tools</h1>
-
+<!--
 <table class="table table-striped table-fixed-header">
 	<thead>
 		<tr>
@@ -43,3 +43,47 @@
 		</tr>
 	</tbody>
 </table>
+
+-->
+
+<?=BS::button(HTML::anchor('http://google.com', BS::icon('star', BS::WHITE).' Lorem barem'), BS::SUCCESS, BS::LARGE);?>
+ <?=BS::button('Test Button '.BS::icon('star', BS::WHITE), BS::INFO, array('type' => 'submit'));?>
+<hr>
+
+<?=BS::toolbar(
+	BS::group('btn', BS::TOGGLE_RADIO, array(
+		BS::button('Left', BS::PRIMARY),
+		BS::button('Middle', BS::PRIMARY),
+		BS::button('Right', BS::PRIMARY)
+)));?>
+
+<hr>
+
+<?=BS::group('btn', array(
+	BS::button('Dropdown'.BS::icon('caret'), BS::DANGER, BS::DROPDOWN),
+	BS::links(BS::DROPDOWN, array(
+		array('Foobar', '#'),
+		array('Barfoo', '#')
+	))
+));?>
+
+
+<?=BS::group('btn', array(
+	BS::button('Split Dropdown', BS::DANGER),
+	BS::button(BS::CARET, BS::DANGER, BS::DROPDOWN),
+	BS::links(BS::DROPDOWN, array(
+		array('Foobar', '#'),
+		array('Barfoo', '#'),
+		array(BS::DIVIDER),
+		array('Lorem ipsum', '#')
+	))
+));?>
+
+<hr>
+
+<?=BS::progress(10);?>
+<?=BS::progress(BS::STRIPED, BS::ACTIVE, array(
+	array(10, BS::DANGER),
+	array(20, BS::WARNING)
+));
+

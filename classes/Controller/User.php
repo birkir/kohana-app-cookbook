@@ -20,17 +20,44 @@ class Controller_User extends Controller_Template {
 
 		// setup view
 		$this->view = View::factory('user/profile')
-		->bind('user', $user);
+		->bind('user', $user)
+		->bind('message', $message)
+		->bind('errors', $errors)
+		->bind('success', $success);
 
+		// bind user
 		$user = $this->user->get_user();
 
 		// if posted
 		if ($this->request->method() == HTTP_Request::POST)
 		{
-			// set user properties and save
-			$user->grocery_day = Arr::get($this->request->post(), 'grocery_day');
-			$user->theme = Arr::get($this->request->post(), 'theme');
-			$user->save();
+			// set model values
+			$user->values($this->request->post(), array(
+				'grocery_day',
+				'theme',
+				'lang'
+			));
+
+			// try validation
+			try
+			{
+				// save orm model
+				$user->save();
+
+				// set user language
+				I18n::lang($user->lang);
+
+				// set success
+				$success = TRUE;
+			}
+			catch (ORM_Validation_Exception $e)
+			{
+                // set failure message
+                $message = 'There were errors, please see form below.';
+
+                // set errors using custom messages
+                $errors = $e->errors('is/models');
+			}
 		}
 
 		// days

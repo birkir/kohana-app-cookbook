@@ -22,15 +22,15 @@
 				<td><?=$item->name;?></td>
 <?php endif; ?>
 				<td><?=$item->name_is;?></td>
-				<?php /*<td><?=__($item->group->name);?></td>*/ ?>
 				<td>
+					<span class="hidden"><?=$item->paleo_scale;?></span>
 					<?php for ($i = 0; $i < $item->paleo_scale; $i++): ?>
 						<span class="icon-leaf"></span>
 					<?php endfor; ?>
 				</td>
 				<td><?=Num::round($item->calories, 0);?> kcal</td>
-				<td><?=Num::round($item->protein, 2);?> g</td>
 				<td><?=Num::round($item->carbohydrate, 2);?> g</td>
+				<td><?=Num::round($item->protein, 2);?> g</td>
 				<td><?=Num::round($item->fat_total, 2);?> g</td>
 				<td><?=Num::round($item->sugars, 2);?> g</td>
 			</tr>

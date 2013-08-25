@@ -56,6 +56,13 @@ class Controller_Template extends Controller {
 		// setup user
 		$this->user = Auth::instance();
 
+		// check if user is logged in
+		if ($this->user->logged_in())
+		{
+			// set user language
+			I18n::lang($this->user->get_user()->lang);
+		}
+
 		// allow global usage of user
 		View::set_global('user', $this->user);
 	}

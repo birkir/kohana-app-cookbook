@@ -13,6 +13,16 @@
 		</div>
 	</div>
 	<div class="control-group">
+		<label for="profileLanguage" class="control-label"><?=__('Language');?></label>
+		<div class="controls">
+			<select name="lang" id="profileLanguage">
+				<?php foreach (array('is-is' => 'Íslenska', 'en-us' => 'English') as $fl => $ln): ?>
+					<option value="<?=$fl;?>"<?=$user->lang == $fl ? ' selected="selected"' : NULL;?>><?=$ln;?></option>
+				<?php endforeach; ?>
+			</select>
+		</div>
+	</div>
+	<div class="control-group">
 		<label for="profileGroceryDay" class="control-label"><?=__('When do you grocery shopping?');?></label>
 		<div class="controls">
 			<select name="grocery_day" id="profileGroceryDay">

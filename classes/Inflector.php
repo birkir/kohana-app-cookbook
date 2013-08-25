@@ -28,4 +28,27 @@ class Inflector extends Kohana_Inflector {
 		return $word;
 	}
 
+	public static function noun($str = NULL, $count = 1)
+	{
+		$b = '';
+		$w = 0;
+		$s = substr($count, -1) == '1' AND $count != 11 ? 1 : 0;
+	
+		for ($i = 0; $i < strlen($str); $i++)
+		{
+			if ($str[$i] == '|')
+				$w = 2;
+			else if ($str[$i] == '[')
+				$w = 1;
+			else if ($str[$i] == ']')
+				$w = 0;
+			else if ($w == 1 AND $s == 0 OR $w == 2 AND $s == 1)
+				$b .= $str[$i];
+			else if ($w == 0)
+				$b .= $str[$i];
+		}
+	
+		return $b;
+	}
+
 } // End Inflector

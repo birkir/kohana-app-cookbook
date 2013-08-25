@@ -5,6 +5,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-touch-fullscreen" content="yes" />
+        <link rel="shortcut icon" href="/media/img/favico.png" />
 		<link href="/media/css/bootstrap.min.css" rel="stylesheet" media="screen">
 		<link href="/media/css/themes/<?=empty(Auth::instance()->get_user()->theme) ? 'cerulean' : Auth::instance()->get_user()->theme;?>.css" rel="stylesheet" media="screen">
 		<?php if ($jqueryui): ?><link href="/media/css/jquery-ui-1.10.0.css" rel="stylesheet" media="screen"><?php endif; ?>
@@ -49,6 +50,7 @@
 		<?php if ($jqueryui): ?><script src="/media/js/jquery-ui-1.10.0.min.js"></script><?php endif; ?>
 
 		<script src="/media/js/bootstrap.min.js"></script>
+		<script src="/media/js/jquery.tokeninput.js"></script>
 		<script src="/media/js/application.js"></script>
 		<script type="text/javascript">
 		  var _gaq = _gaq || [];

@@ -16,7 +16,8 @@
 			<input type="file" id="recipePhoto" name="photo">
 		</div>
 	</div>
-	<div class="control-group">
+	<div class="control-group" style="position: relative;">
+		<a href="#instructions" role="button" class="btn btn-info" data-toggle="modal" style="position: absolute; right: 0;">Leiðbeiningar</a>
 		<label class="control-label"><?=__('Ingredients');?></label>
 		<div class="controls grid ingredients-template hidden">
 			<div class="input-append unitize">
@@ -36,10 +37,45 @@
 			</div>
 			<input type="hidden" name="ingredient[]" class="hideingredient">
 			<input type="text" class="span2 typeahead-ingredient" placeholder="<?=__('Ingredient');?>" data-provide="typeahead">
-			<input type="text" class="span2" name="note[]" placeholder="<?=__('Note');?>">
+			<input type="text" class="span2 inote" name="note[]" placeholder="<?=__('Note');?>">
 			<a href="#" class="btn btn-danger remove-ingredient" rel="tooltip" title="<?=__('Remove ingredient row');?>">-</a>
 			<a href="#" class="btn btn-success ingredients-add-row" rel="tooltip" title="<?=__('Add ingredient row');?>">+</a>
 		</div>
+		<div id="instructions" data-backdrop="true" class="modal hide fade" tabindex="-1" role="dialog" aria-hidden="true" style="top: 350px; position: absolute; margin-left: -370px; width: 918px;">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+				<h3 id="myModalLabel">Leiðbeiningar</h3>
+			</div>
+			<div class="modal-body">
+				<div class="step step1">
+					<p>Hér setur þú inn magn þess hráefnis sem þú ætlar að skrá niður.</p>
+					<p>Kerfið skilur bara einingar með aukastöfum, þannig ef þú vilt t.d. 2 og 1/4 bolla, skráir þú 2.25</p>
+					<a href="javascript:App.instructions.step(2);" class="btn btn-primary pull-right">Næsta</a>
+				</div>
+				<div class="step step2 hide">
+					<p>Hér velur þú þá mælieiningu sem þú vilt nota.</p>
+					<p>Við viljum benda á að SI einingakerfið er nákvæmast, þeas. grömm og millilítrar.</p>
+					<p>Öll stykki eru mæld í miðlungs stóru. Þeas. 1 stk gulrót er meðalstór gulrót.</p>
+					<a href="javascript:App.instructions.step(3);" class="btn btn-primary pull-right" style="margin-left: 10px;">Næsta</a>
+					<a href="javascript:App.instructions.step(1);" class="btn btn-primary pull-right">Fyrri</a>
+				</div>
+				<div class="step step3 hide">
+					<p>Hér slærð þú inn hráefnið sem þú vilt nota. T.d. BANANI</p>
+					<p>Þú <strong>verður</strong> svo að velja hráefnið úr listanum.</p>
+					<p>Ef hráefnið þitt kemur ekki fyrir, verður að setja það handvirkt inn í kerfið.</p>
+					<a href="javascript:App.instructions.step(4);" class="btn btn-primary pull-right" style="margin-left: 10px;">Næsta</a>
+					<a href="javascript:App.instructions.step(2);" class="btn btn-primary pull-right">Fyrri</a>
+				</div>
+				<div class="step step4 hide">
+					<p>Hér getur þú slegið inn t.d. NIÐURSKORNIR, SAXAÐIR eða VEL ÞROSKAÐIR.</p>
+					<p>Við mælum ekki með því að slá inn t.d. EÐA MÖNDLUR, STÓRIR eða LITLIR.</p>
+					<a href="#" data-dismiss="modal" aria-hidden="true" class="btn btn-success pull-right" style="margin-left: 10px;">Loka</a>
+					<a href="javascript:App.instructions.step(3);" class="btn btn-primary pull-right">Fyrri</a>
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript">
+		</script>
 		<div class="dynamic-ingredients">
 			<?php foreach ($item->all_ingredients() as $ingredient): ?>
 				<?php $unit = ORM::factory('Unit', $ingredient->unit); ?>
@@ -61,7 +97,7 @@
 					</div>
 					<input type="hidden" name="ingredient[]" value="<?=$ingredient->id;?>" class="hideingredient">
 					<input type="text" class="span2 typeahead-ingredient" placeholder="<?=__('Ingredient');?>" data-provide="typeahead" value="<?=$ingredient->name_is;?>">
-					<input type="text" class="span2" name="note[]" placeholder="<?=__('Note');?>" value="<?=$ingredient->note;?>">
+					<input type="text" class="span2 inote" name="note[]" placeholder="<?=__('Note');?>" value="<?=$ingredient->note;?>">
 					<a href="#" class="btn btn-danger remove-ingredient" rel="tooltip" title="<?=__('Remove ingredient row');?>">-</a>
 					<a href="#" class="btn btn-success ingredients-add-row" rel="tooltip" title="<?=__('Add ingredient row');?>">+</a>
 					<div class="icon-resize-vertical"></div>
@@ -95,9 +131,10 @@
 	</div>
 
 	<div class="control-group<?=Form::has_error($errors, 'serving_size');?>">
-		<?=Form::label('recipeServingSize', __('Serves'), array('class' => 'control-label'));?>
+		<?=Form::label('recipeServingSize', __('Magn'), array('class' => 'control-label'));?>
 		<div class="controls">
-			<?=Form::input('serving_size', Form::value($item, 'serving_size'), array('id' => 'recipeServingSize', 'class' => 'input-medium'));?> <?=__('people');?>
+			<?=Form::input('serving_size', Form::value($item, 'serving_size'), array('id' => 'recipeServingSize', 'class' => 'input-small'));?>
+			<?=Form::input('serving_type', Form::value($item, 'serving_type'), array('id' => 'recipeServingType', 'class' => 'input-medium', 'placeholder' => 'manns'));?>
 		</div>
 		<?=Form::helper($errors, 'serving_size');?>
 	</div>
