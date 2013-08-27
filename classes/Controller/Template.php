@@ -26,19 +26,13 @@ class Controller_Template extends Controller {
 	 * Template name
 	 * @var string
 	 */
-	public $template = 'template';
+	public $template = 'Template';
 
 	/**
 	 * Auto render template
 	 * @var boolean
 	 */
 	public $auto_render = TRUE;
-
-	/**
-	 * jQuery UI toggle
-	 * @var boolean
-	 */
-	public $jqueryui = TRUE;
 
 	/**
 	 * Overwrite controller's before function
@@ -68,6 +62,30 @@ class Controller_Template extends Controller {
 	}
 
 	/**
+	 * Output data as JSON with status codes etc.
+	 *
+	 * @param array Data to parse
+	 * @return void
+	 */
+	public function json($callback)
+	{
+		// Serve ajax request
+		if (Request::initial()->is_ajax())
+		{
+			// Disable auto render
+			$this->auto_render = FALSE;
+
+			// get data from callback
+			$data = $callback();
+
+			// JSON Encode data array
+			$data = json_encode($data);
+
+			$this->response->body($data);
+		}
+	}
+
+	/**
 	 * Overwrite controller's after function
 	 *
 	 * @return void
@@ -79,9 +97,6 @@ class Controller_Template extends Controller {
 
 		// setup template view
 		$this->template->view = $this->view;
-
-		// set jquery ui
-		$this->template->jqueryui = $this->jqueryui;
 
 		// if auto render
 		if ($this->auto_render === TRUE)

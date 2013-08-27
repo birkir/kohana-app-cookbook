@@ -113,16 +113,19 @@ Kohana::modules(array(
 	'database'   => MODPATH.'database',   // Database access
 	'image'      => MODPATH.'image',      // Image manipulation
 	'orm'        => MODPATH.'orm',        // Object Relationship Mapping
-	'pagination' => MODPATH.'pagination',
-	'userguide'  => MODPATH.'userguide',  // User guide and API documentation
+	'media'      => MODPATH.'media',      // Media serving capabilities
 	));
 
 /**
  * Set the routes. Each route must have a minimum of a name, a URI and a set of
  * defaults for the URI.
  */
-Route::set('default', '(<controller>(/<action>(/<id>(/<params>))))', array('params' => '.*'))
-	->defaults(array(
-		'controller' => 'welcome',
+Route::set('default', '(<controller>(/<action>(/<id>(/<params>))))', ['params' => '.*'])
+	->defaults([
+		'controller' => 'recipe',
 		'action'     => 'index',
-	));
+	]);
+
+
+// Cookie salt
+Cookie::$salt = Kohana::$config->load('application')->cookie_salt;

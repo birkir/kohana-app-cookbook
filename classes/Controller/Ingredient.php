@@ -2,7 +2,7 @@
 /**
  * Ingredient Controller
  *
- * @package    Paleo
+ * @package    Cookbook
  * @category   Controller
  * @author     Birkir Gudjonsson (birkir.gudjonsson@gmail.com)
  * @copyright  (c) 2012 Birkir Gudjonsson
@@ -11,51 +11,51 @@
 class Controller_Ingredient extends Controller_Template {
 
 	/**
-	 * Nutrition fields
-	 * @var array
+	 * @var array Nutrition fields
 	 */
-	public $num_fields = array(
-		'calories' => 'Calories',
-		'fat_total' => 'Total Fat',
+	public $num_fields = [
+		'calories'      => 'Calories',
+		'fat_total'     => 'Total Fat',
 		'fat_saturated' => 'Saturated Fat',
-		'fat_trans' => 'Trans Fat',
-		'cholestrol' => 'Cholestrol',
-		'sodium' => 'Sodium',
-		'carbohydrate' => 'Total Carbohydrate',
+		'fat_trans'     => 'Trans Fat',
+		'cholestrol'    => 'Cholestrol',
+		'sodium'        => 'Sodium',
+		'carbohydrate'  => 'Total Carbohydrate',
 		'dietary_fiber' => 'Dietary Fiber',
-		'sugars' => 'Sugars',
-		'protein' => 'Protein',
-		'vitamin_a' => 'Vitamin A',
-		'vitamin_c' => 'Vitamin C',
-		'calcium' => 'Calcium',
-		'iron' => 'Iron',
-		'multiplier' => 'Grams in 1 cup',
-		'piece_100g' => 'Amount (piece, default)'
-	);
+		'sugars'        => 'Sugars',
+		'protein'       => 'Protein',
+		'vitamin_a'     => 'Vitamin A',
+		'vitamin_c'     => 'Vitamin C',
+		'calcium'       => 'Calcium',
+		'iron'          => 'Iron',
+		'multiplier'    => 'Grams in 1 cup',
+		'piece_100g'    => 'Amount (piece, default)'
+	];
 
 	/**
 	 * List ingredients
 	 *
 	 * @return void
 	 */
-	public function action_index()
+	public function action_Index()
 	{
-		// list ingredients by name
-		$this->view = View::factory('ingredient/list')
-		->set('items', ORM::factory('Ingredient')
+		// Setup view and bind items
+		$this->view = View::factory('Ingredient/List')
+		->bind('items', $items);
+
+		// List items from ORM
+		$items = ORM::factory('Ingredient')
 		->order_by('name', 'ASC')
-		->find_all());
+		->find_all();
 
-		// serve ajax request
-		if ($this->request->is_ajax())
-		{
-			// disable template auto render
-			$this->auto_render = FALSE;
-
-			// return all items
-			$this->response->body(json_encode(DB::select('id', array('name_is', 'name'))->from('ingredients')
-			->order_by('name', 'ASC')->execute()->as_array()));
-		}
+		// Serve JSON on ajax request
+		$this->json(function () {
+			return DB::select('id', ['name_is', 'name'])
+			->from('ingredients')
+			->order_by('name', 'ASC')
+			->execute()
+			->as_array();
+		});
 	}
 
 	/**
@@ -65,24 +65,18 @@ class Controller_Ingredient extends Controller_Template {
 	 */
 	public function action_search()
 	{
-		$this->auto_render = FALSE;
+		$this->json(function () {
 
-		$query = UTF8::strtolower($_GET['query']);
+			// get query from query string
+			$q = $this->request->query('query');
 
-		$items = ORM::factory('Ingredient')
-		->find_all();
-
-		$response = array();
-
-		foreach ($items as $item)
-		{
-			if (strpos($item->name, $query) !== FALSE OR strpos($item->name_is, $query) !== FALSE)
-			{
-				$response[] = array('id' => $item->id, 'name' => $item->name_is);
-			}
-		}
-
-		$this->response->body(json_encode($response));
+			// find items that match
+			return ORM::factory('Ingredient')
+			->where('name', 'LIKE', '%'.$q.'%')
+			->or_where('name_is', 'LIKE', '%'.$q.'%')
+			->find_all()
+			->as_array('id', 'name_is');
+		});
 	}
 
 	/**
@@ -90,39 +84,36 @@ class Controller_Ingredient extends Controller_Template {
 	 *
 	 * @return void
 	 */
-	public function action_create()
+	public function action_Create()
 	{
-		// setup fieldset view
-		$this->view = View::factory('ingredient/fieldset')
-		->bind('errors', $errors)
-		->bind('item', $ingredient)
+		$this->view = View::factory('Ingredient/Fieldset')
+		->bind('form', $form)
 		->set('num_fields', $this->num_fields);
 
-		// set orm as loader
-		$ingredient = ORM::factory('Ingredient');
+		// ORM Model to attach to Form
+		$item = ORM::factory('Ingredient');
 
+		// Load all groups
 		$this->view->groups = ORM::factory('Ingredient_Group')
 		->order_by('id', 'ASC')
 		->where('parent_id', 'IS', NULL)
 		->find_all();
 
-		// check for post
-		if ($this->request->method() == HTTP_Request::POST)
+		// Setup Form
+		$form = Form::factory($item);
+
+		// Process HTTP Request
+		if ($this->request->method() === HTTP_Request::POST)
 		{
+			// Attach POST data values to Model
+			$item->values($this->request->post());
+
 			try
 			{
-				$ingredient = ORM::factory('Ingredient')
-				->values($this->request->post())
-				->save();
-				
-				HTTP::redirect('/ingredient/edit/'.$ingredient->id);
+				$item->save();
+				HTTP::redirect('/Ingredient/Edit/'.$item->id);
 			}
-			catch (ORM_Validation_Exception $e)
-			{
-                // set errors using custom messages
-                $errors = $e->errors('is/models');
-            }
-            
+			catch (ORM_Validation_Exception $e) {}
 		}
 	}
 
@@ -131,41 +122,39 @@ class Controller_Ingredient extends Controller_Template {
 	 *
 	 * @return void
 	 */
-	public function action_edit()
+	public function action_Edit()
 	{
-		// setup fieldset view
-		$this->view = View::factory('ingredient/fieldset')
-		->bind('item', $ingredient)
-		->bind('errors', $errors)
+		$this->view = View::factory('Ingredient/Fieldset')
+		->bind('form', $form)
 		->set('num_fields', $this->num_fields);
 
+		// ORM Model to attach to Form
+		$item = ORM::factory('Ingredient', $this->request->param('id'));
 
+		// Throw 404 on not found
+		if ( ! $item->loaded())
+			throw new HTTP_Exception_404();
+
+		// Load all groups
 		$this->view->groups = ORM::factory('Ingredient_Group')
 		->order_by('id', 'ASC')
 		->where('parent_id', 'IS', NULL)
 		->find_all();
 
-		// load item by id
-		$ingredient = ORM::factory('Ingredient', $this->request->param('id'));
+		// Setup Form
+		$form = Form::factory($item);
 
-		// check if item found
-		if ( ! $ingredient->loaded())
-			throw new HTTP_Exception_404('Ingredient not found');
-
-		// check for post
-		if ($this->request->method() == HTTP_Request::POST)
+		// Process HTTP Request
+		if ($this->request->method() === HTTP_Request::POST)
 		{
+			// Attach POST data values to Model
+			$item->values($this->request->post());
+
 			try
 			{
-				$ingredient = $ingredient
-				->values($this->request->post())
-				->save();
+				$item->save();
 			}
-			catch (ORM_Validation_Exception $e)
-			{
-                // set errors using custom messages
-                $errors = $e->errors('models');
-            }
+			catch (ORM_Validation_Exception $e) {}
 		}
 	}
 

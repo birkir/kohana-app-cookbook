@@ -2,6 +2,13 @@
 
 return array(
 
+	// model labels translation
+	'email address' => 'netfang',
+	'username' => 'notendanafn',
+
+	// validation messages translation
+	':field cannot be empty' => ':field getur ekki verið tómt',
+
 	// general
 	'Name' => 'Heiti',
 	'Unit' => 'Eining',

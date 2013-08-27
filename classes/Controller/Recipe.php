@@ -2,7 +2,7 @@
 /**
  * Recipe Controller
  *
- * @package    Paleo
+ * @package    Cookbook
  * @category   Controller
  * @author     Birkir Gudjonsson (birkir.gudjonsson@gmail.com)
  * @copyright  (c) 2012 Birkir Gudjonsson
@@ -21,47 +21,20 @@ class Controller_Recipe extends Controller_Template {
 	 *
 	 * @return void
 	 */
-	public function action_index()
+	public function action_Index()
 	{
-		// setup view
-		$this->view = View::factory('recipe/list')
+		// Setup view
+		$this->view = View::factory('Recipe/List')
 		->bind('items', $items)
 		->set('limit', $this->_limit)
 		->set('offset', 0)
 		->set('q', $this->request->query());
 
-		// get recipes
+		// Get recipes
 		$items = $this->search(array(), array(
 			'offset' => 0,
 			'limit' => $this->_limit
 		));
-	}
-
-	public function action_ihave()
-	{
-		$this->template->title = "Ég á til í ískápnum";
-
-		$this->view = View::factory('recipe/ihave')
-		->bind('items', $items);
-
-		if ($this->request->method() == HTTP_Request::GET AND ! empty($_GET['q']))
-		{
-			$in = explode(',', Arr::get($this->request->query(), 'q'));
-
-			$subquery = DB::select(DB::expr('COUNT(*)'))
-			->from('recipe_ingredient')
-			->where('recipe_ingredient.recipe_id', '=', DB::expr('`recipe`.`id`'))
-			->and_where('recipe_ingredient.ingredient_id', 'IN', DB::expr('('.implode(',', $in).')'));
-
-			$subquery2 = DB::select(DB::expr('COUNT(*)'))
-			->from('recipe_ingredient')
-			->where('recipe_ingredient.recipe_id', '=', DB::expr('`recipe`.`id`'));
-
-			$items = ORM::factory('Recipe')
-			->select(array(DB::Expr('CONCAT(calories,",",protein,",",fat,",",carbs,",",sugars)'), 'nutritions'))
-			->where($subquery, '=', $subquery2)
-			->find_all();
-		}
 	}
 
 	/**
@@ -154,22 +127,33 @@ class Controller_Recipe extends Controller_Template {
 	 * @param int Recipe ID
 	 * @return void
 	 */
-	public function action_detail()
+	public function action_Detail()
 	{
-		$recipe = ORM::factory('Recipe', $this->request->param('id'));
+		// Setup view
+		$this->view = View::factory('Recipe/Detail')
+		->bind('item', $item)
+		->bind('nutrition', $nutrition)
+		->bind('units', $units);
 
-		if ( ! $recipe->loaded())
-		{
-			throw new HTTP_Exception_404('Recipe not available.');
-		}
+		// Get recipe
+		$item = ORM::factory('Recipe', $this->request->param('id'));
 
-		$this->template->title = $recipe->name;
+		// Throw 404 when recipe not loaded
+		if ( ! $item->loaded())
+			throw new HTTP_Exception_404();
 
-		$this->view = View::factory('recipe/detail')
-		->set('item', $recipe)
-		->set('ntr', $recipe->nutritions())
-		->set('units', ORM::factory('Unit')->find_all()->as_array('id', 'short'))
-		->set('ingredients', $recipe->all_ingredients());
+		// Get nutrition information and load view
+		$nutrition = View::factory('Recipe/Nutrition')
+		->set('item', $item->nutritions())
+		->set('serving', $item->serving_size);
+
+		// Find all units
+		$units = ORM::factory('Unit')
+		->find_all()
+		->as_array('id', 'short');
+
+		// Set page title
+		$this->template->title = $item->name;
 	}
 
 	/**
@@ -178,102 +162,67 @@ class Controller_Recipe extends Controller_Template {
 	 * @param int Recipe ID
 	 * @return void
 	 */
-	public function action_photo()
+	public function action_Photo()
 	{
-		// load recipe object
+		// Load recipe
 		$recipe = ORM::factory('Recipe', $this->request->param('id'));
 
-		// did not find recipe photo
-		if ( ! $recipe->loaded() || $recipe->photo === NULL)
-		{
-			throw new HTTP_Exception_404('Recipe photo not available.');
-		}
+		// Available sizes and size from URI
+		$sizes = ['thumb.jpg' => [100, 100], 'large.jpg' => [800, 600]];
+		$size = $this->request->param('params');
 
-		// skip template auto render
+		// Did not find recipe photo or size requested
+		if ( ! $recipe->loaded() OR $recipe->photo === NULL OR ! isset($sizes[$size]))
+			throw new HTTP_Exception_404();
+
+		// Disable auto render
 		$this->auto_render = FALSE;
 
-        // calculate ETag from original file padded with the dimension specs
-        $etag_sum = md5(base64_encode($recipe->photo));
- 
- 		// make cache etag_sum path
-		$cache = APPPATH.'cache/photo_'.$etag_sum;
+		// Create file path
+		$path = APPPATH.'media/recipe/'.hash('sha1', $recipe->photo).($size === 'thumb.jpg' ? '.thumb' : NULL).'.jpg';
 
-		// if cache does not exists
-		if ( ! file_exists($cache))
+		// Check if recipe file exists
+		if ( ! file_exists($path))
 		{
-			file_put_contents($cache, $recipe->photo);
- 		}
+			// Write original image to disk
+			@file_put_contents($path, $recipe->photo);
 
- 		// start resize progress
- 		$size = explode('x', $this->request->param('params'));
+			// Resize image from disk
+			$image = Image::factory($path)
+			->resize($sizes[$size][0], $sizes[$size][1])
+			->render('jpg', 80);
 
-		// default size
-		if (empty($size[0]) OR empty($size[1]))
-		{
-			$size = array(640, 480);
+			// Replace its original content with resized one
+			@file_put_contents($path, $image);
 		}
 
-		// build cache size path
-		$cache_size = APPPATH.'cache/photo_'.intval($size[0]).'x'.$size[1].'_'.$etag_sum;
-
-		if ( ! file_exists($cache_size))
-		{
- 			$image = Image::factory($cache);
-
-			if (strpos($size[1], 'w') !== FALSE)
-				$image = $image->resize(intval($size[0]), intval($size[1]), Image::WIDTH);
-			else if (strpos($size[1], 'h') !== FALSE)
-				$image = $image->resize(intval($size[0]), intval($size[1]), Image::HEIGHT);
-			else
-				$image = $image->resize(intval($size[0]), intval($size[1]));
-
-			if (strpos($size[1], 'c') !== FALSE)
-			{
-				$image = $image->crop(intval($size[0]), intval($size[1]));
-			}
-
-			$image = $image->render('jpg', strpos($size[1], 'd') !== FALSE ? 75 : 100);
-
- 			file_put_contents($cache_size, $image);
- 		}
-
-		// generate new etag_sum
-		$etag_sum = md5(base64_encode(file_get_contents($cache_size)));
-
-        // render as image and cache for 1 hour
-        $this->response->headers('Content-Type', 'image/jpeg')
-        ->headers('Cache-Control', 'max-age='.(Date::HOUR * 24).', public, must-revalidate')
-        ->headers('Expires', gmdate('D, d M Y H:i:s', time() + Date::HOUR * 24).' GMT')
-        ->headers('Last-Modified', date('r', time() - 3600))
-        ->headers('ETag', $etag_sum);
- 
- 		// check for cache
-        if ($this->request->headers('if-none-match') AND (string) $this->request->headers('if-none-match') === $etag_sum)
-        {
-            $this->response->status(304)->headers('Content-Length', '0');
-        }
-        else
-        {
-        	$output = file_get_contents($cache_size);
-        	$this->response->headers('Content-Length', strlen($output));
-            $this->response->body($output);
-        }
+		// Forward Media module request to its own response
+		$this->response = Request::factory(substr($path,strlen(APPPATH)))->execute();
 	}
 
 	/**
 	 * Create new recipe
+	 *
+	 * @return void
 	 */
-	public function action_create()
+	public function action_Create()
 	{
-		$this->view = View::factory('recipe/fieldset')
-		->bind('item', $recipe)
-		->bind('errors', $errors)
-		->bind('success', $success);
+		$this->view = View::factory('Recipe/Fieldset')
+		->bind('form', $form);
 
-		$recipe = $this->process_fieldset();
+		$item = ORM::factory('Recipe');
+
+		$form = Form::factory($item);
+
+		// $recipe = $this->process_fieldset();
 	}
 
-	public function action_edit()
+	/**
+	 * Recipe edit
+	 *
+	 * @return void
+	 */
+	public function action_Edit()
 	{
 		$this->view = View::factory('recipe/fieldset')
 		->bind('item', $recipe)

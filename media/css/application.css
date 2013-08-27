@@ -1,0 +1,75 @@
+/* Move down content because we have a fixed navbar that is 50px tall */
+body {
+  padding-top: 40px;
+  padding-bottom: 20px;
+}
+
+/** checkbox **/
+input[type="checkbox"]:checked::after, .checkbox input[type="checkbox"]:checked::after, .checkbox-inline input[type="checkbox"]:checked::after {
+  content: url(../img/checkmark.png);
+}
+
+/** sign-in page **/
+.form-signin {
+  max-width: 330px;
+  padding: 15px;
+  margin: 0 auto;
+}
+.form-signin .form-signin-heading,
+.form-signin .checkbox {
+  margin-bottom: 10px;
+}
+.form-signin .checkbox {
+  font-weight: normal;
+}
+.form-signin .form-control {
+  position: relative;
+  font-size: 16px;
+  height: auto;
+  padding: 10px;
+  -webkit-box-sizing: border-box;
+     -moz-box-sizing: border-box;
+          box-sizing: border-box;
+}
+.form-signin .form-control:focus {
+  z-index: 2;
+}
+.form-signin input[type="text"] {
+  margin-bottom: -1px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.form-signin input[type="password"] {
+  margin-bottom: 10px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+
+/** nutrition information **/
+.nutritions {
+  border: 1px solid #222222;
+  padding: 10px;
+}
+.nutritions dl dt {
+  clear: left;
+  float: left;
+}
+.nutritions dl dt.inset {
+  padding-left: 16px;
+  font-weight: normal;
+}
+.nutritions dl dd {
+  float: left;
+  margin-left: 10px;
+}
+.nutritions dl dd.p {
+  float: right;
+  padding-right: 8px;
+}
+.nutritions hr {
+  margin: 10px 0 0;
+  height: 5px;
+  background: #333;
+  border: 0;
+}

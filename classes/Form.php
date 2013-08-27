@@ -2,7 +2,7 @@
 /**
  * Form extended helper class.
  *
- * @package    Paleo
+ * @package    Cookbook
  * @category   Helpers
  * @author     Birkir Gudjonsson (birkir.gudjonsson@gmail.com)
  * @copyright  (c) 2012 Birkir Gudjonsson
@@ -10,72 +10,96 @@
  */
 class Form extends Kohana_Form {
 
+	public $message_success = 'The form has been submitted.';
+
+	public $message_errors = 'We found some errors while processing the form, please correct them below.';
+
+	protected $_errors = [];
+
 	/**
-	 * Check for value in object, array, post or get.
-	 *
-	 * @param  mixed  Object or array
-	 * @param  string Field name
-	 * @return string
+	 * Allow to initialize Form class with some kind of model.
+	 * 
+	 * @param  mixed ORM or Array
+	 * @return Form
 	 */
-	public static function value($item, $field = NULL)
+	public static function factory($model = NULL, $extra_validation = NULL)
 	{
-		// check if item is object
-		if (($item instanceof Kohana_ORM AND $item->loaded()) OR is_object($item) AND isset($item->{$field}))
-		{
-			// return object's field
-			return $item->{$field};
-		}
-		else if (is_array($item) AND isset($item[$field]))
-		{
-			// return array's field
-			return $item[$field];
-		}
-		else
-		{
-			// get initial request
-			$request = Request::initial();
+		return new Form($model, $extra_validation);
+	}
 
-			// check for request method
-			if ($request->method() == HTTP_Request::POST)
+	/**
+	 * Create construct to interact with model
+	 *
+	 * @param  mixed ORM or Array
+	 * @return void
+	 */
+	public function __construct($model, $extra_validation)
+	{
+		$this->model = $model;
+
+		$this->extra_validation = $extra_validation;
+
+		return $this;
+	}
+
+	public function __toString()
+	{
+		if ($this->model instanceof ORM)
+		{
+			if (count($this->model->changed()) > 0)
 			{
-				// return post field
-				return $request->post($field, NULL);
+				try
+				{
+					$this->model->check($this->extra_validation ? $this->extra_validation : NULL);
+				}
+				catch (ORM_Validation_Exception $e)
+				{
+					$this->_errors = $e->errors('models/'.$this->model->object_name(), TRUE);
+				}
 			}
-			else if ($request->method() == HTTP_Request::GET)
-			{
-				// return get field
-				return $request->query($field);
-			}
+
+			if (count($this->_errors) > 0)
+				return '<div'.HTML::attributes(['class' => 'alert alert-danger']).'>'.__($this->message_errors).'</div>';
+
+			if ($this->model->saved())
+				return '<div'.HTML::attributes(['class' => 'alert alert-success']).'>'.__($this->message_success).'</div>';
 		}
 
-		// return null by default
+
+		return '';
+	}
+
+	public function value($name = NULL)
+	{
+		if ($request = Request::current() AND $request->method() === HTTP_Request::POST)
+		{
+			return Arr::get($request->post(), $name);
+		}
+		else if ($this->model->loaded())
+		{
+			return $this->model->{$name};
+		}
+
+		return '';
+	}
+
+	public function has($name = NULL)
+	{
+		if (Arr::path($this->_errors, '_external.'.$name, FALSE) OR Arr::path($this->_errors, $name, FALSE))
+			return ' has-error';
+
 		return NULL;
 	}
 
-	/**
-	 * Check if item has error
-	 *
-	 * @param  mixed   Object or array
-	 * @param  string  Field name
-	 * @return boolean
-	 */
-	public static function has_error($item, $field = NULL)
+	public function helper($name)
 	{
-		// return if available
-		return (is_array($item) AND isset($item[$field])) ? ' error' : NULL;
-	}
+		if ($message = Arr::path($this->_errors, $name, FALSE)) { }
+		else if ($message = Arr::path($this->_errors, '_external.'.$name, FALSE)) { }
 
-	/**
-	 * Check if item has error
-	 *
-	 * @param  mixed   Object or array
-	 * @param  string  Field name
-	 * @return boolean
-	 */
-	public static function helper($item, $field = NULL)
-	{
-		// return if available
-		return (is_array($item) AND isset($item[$field])) ? '<span class="help-block">'.$item[$field].'</span>' : NULL;
+		if (isset($message) AND $message)
+			return '<span'.HTML::attributes(['class' => 'help-block']).'>'.(is_string($message) ? $message : 'unknown_error').'</span>';
+
+		return NULL;
 	}
 
 } // End Form
